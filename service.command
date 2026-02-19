@@ -189,18 +189,19 @@ do_switch_strategy() {
     local json="$UTILS/strategies/strategies.json"
     if [[ -f "$json" ]]; then
         echo "Стратегии:"
-        for i in $(seq 1 13); do
+        for i in $(seq 1 14); do
             desc=$(python3 -c "import json,sys; d=json.load(open('$json')); print(d.get('$i',{}).get('description','?'))" 2>/dev/null || echo "?")
             rec=""
             [[ "$i" = "11" ]] && rec=" (рекомендуется)"
+            [[ "$i" = "14" ]] && rec=" (для chess.com/Cloudflare)"
             echo "  $i — $desc$rec"
         done
     else
-        echo "Стратегии: 1–13 (11 — ALT11, рекомендуется)"
+        echo "Стратегии: 1–14 (11 — рекомендуется, 14 — для chess.com)"
     fi
     echo ""
-    read -p "Номер (1–13): " num
-    if [[ "$num" =~ ^[0-9]+$ ]] && (( num >= 1 && num <= 13 )); then
+    read -p "Номер (1–14): " num
+    if [[ "$num" =~ ^[0-9]+$ ]] && (( num >= 1 && num <= 14 )); then
         [[ -x "$UTILS/apply-strategy.sh" ]] && TEST_AFTER_STRATEGY="$TEST_AFTER_STRATEGY" SOCKS_PORT="$SOCKS_PORT" sudo -E "$UTILS/apply-strategy.sh" "$num" && echo "Стратегия $num применена."
     else
         echo "Неверный номер."
@@ -270,7 +271,7 @@ show_menu() {
     echo "  3. Остановить"
     echo "  4. Статус"
     echo "  5. Обновить список доменов"
-    echo "  6. Сменить стратегию (1–13, для прозрачного режима)"
+    echo "  6. Сменить стратегию (1–14, для прозрачного режима)"
     echo "  7. Обновить hosts для Discord (голос и т.п.)"
     echo "  8. Проверить доступность (YouTube, Discord)"
     echo ""
@@ -317,7 +318,7 @@ case "${1:-menu}" in
         echo "  stop          — остановка"
         echo "  status        — статус"
         echo "  update        — обновить список доменов"
-        echo "  strategy      — смена стратегии (1–13)"
+        echo "  strategy      — смена стратегии (1–14)"
         echo "  discord-hosts — обновить /etc/hosts для Discord"
         echo "  check         — проверить доступность YouTube и Discord"
         echo "  menu          — интерактивное меню (по умолчанию)"

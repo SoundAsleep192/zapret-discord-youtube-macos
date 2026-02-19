@@ -19,20 +19,21 @@ SOCKS_PORT="${SOCKS_PORT:-987}"
 JSON="$UTILS/strategies/strategies.json"
 if [[ -f "$JSON" ]]; then
     echo "Стратегии (из strategies.json):"
-    for i in $(seq 1 13); do
+    for i in $(seq 1 14); do
         desc=$(python3 -c "import json,sys; d=json.load(open('$JSON')); print(d.get('$i',{}).get('description','?'))" 2>/dev/null || echo "?")
         rec=""
         [[ "$i" = "11" ]] && rec=" — рекомендуется"
+        [[ "$i" = "14" ]] && rec=" — для chess.com/Cloudflare"
         echo "  $i  — $desc$rec"
     done
 else
-    echo "Стратегии: 1–13 (11 — ALT11, рекомендуется)."
+    echo "Стратегии: 1–14 (11 — рекомендуется, 14 — для chess.com)."
 fi
 echo ""
 
-read -p "Введи номер стратегии (1-13): " num
+read -p "Введи номер стратегии (1-14): " num
 
-if [[ ! "$num" =~ ^[0-9]+$ ]] || (( num < 1 || num > 13 )); then
+if [[ ! "$num" =~ ^[0-9]+$ ]] || (( num < 1 || num > 14 )); then
     echo "Неверный номер."
     read -p "Нажмите Enter, чтобы закрыть."
     exit 1

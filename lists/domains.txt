@@ -56,13 +56,42 @@ gvt1.com
 youtube-nocookie.com
 img.youtube.com
 
-# Chess.com
+# Chess.com (часто за Cloudflare)
 chess.com
 www.chess.com
 api.chess.com
 assets.chess.com
 live.chess.com
 images.chess.com
+
+# Cloudflare (из Flowseal list-general.txt — сайты за Cloudflare, в т.ч. chess.com)
+cloudflare.com
+cdnjs.cloudflare.com
+static.cloudflare.com
+cloudflare-ech.com
+encryptedsni.com
+cloudflareaccess.com
+cloudflareapps.com
+cloudflarebolt.com
+cloudflareclient.com
+cloudflareinsights.com
+cloudflareok.com
+cloudflarepartners.com
+cloudflareportal.com
+cloudflarepreview.com
+cloudflareresolve.com
+cloudflaressl.com
+cloudflarestatus.com
+cloudflarestorage.com
+cloudflarestream.com
+cloudflaretest.com
+
+# Discord (доп. из Flowseal)
+discord.app
+discord.status
+discordcdn.com
+discordsez.com
+discordstatus.com
 
 # Прочее
 fandom.com

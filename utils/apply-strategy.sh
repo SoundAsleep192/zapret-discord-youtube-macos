@@ -23,18 +23,18 @@ CONFIG="$ZAPRET_DIR/config"
 STRATEGY_NUM="${1:-0}"
 
 if [[ -z "$STRATEGY_NUM" ]]; then
-    echo "Использование: $0 <номер стратегии 1-13>"
+    echo "Использование: $0 <номер стратегии 1-14>"
     exit 1
 fi
 
-# Найти файл стратегии (11-alt11.txt или 1-default.txt)
+# Найти файл стратегии (11-alt11.txt, 14-cloudflare.txt и т.д.)
 STRATEGY_FILE=""
 for f in "$STRATEGIES_DIR/$STRATEGY_NUM"*.txt; do
     [[ -f "$f" ]] && STRATEGY_FILE="$f" && break
 done
 
 if [[ -z "$STRATEGY_FILE" ]]; then
-    echo "Ошибка: стратегия $STRATEGY_NUM не найдена (допустимы номера 1-13)"
+    echo "Ошибка: стратегия $STRATEGY_NUM не найдена (допустимы номера 1-14)"
     exit 1
 fi
 
@@ -100,9 +100,9 @@ if [[ "${TEST_AFTER_STRATEGY:-0}" = "1" ]]; then
         if [[ $ok -eq 2 ]]; then
             echo "Проверка пройдена: YouTube ($code_yt), Discord ($code_dc)."
         else
-            echo "Проверка: YouTube=$code_yt, Discord=$code_dc. Если не открываются — попробуйте другую стратегию (6 или 12)."
+            echo "Проверка: YouTube=$code_yt, Discord=$code_dc. Если не открываются — попробуйте стратегию 6, 12 или 14 (для chess.com)."
         fi
     fi
 fi
 
-echo "Готово. Проверьте YouTube и Discord."
+echo "Готово. Проверьте YouTube, Discord и при необходимости chess.com (стратегия 14)."
