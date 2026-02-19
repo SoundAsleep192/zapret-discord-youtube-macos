@@ -1,0 +1,37 @@
+# Список доменов для обхода блокировок (только Discord и YouTube)
+# Один домен на строку. Строки с # игнорируются.
+# Добавляйте сюда другие домены при необходимости.
+
+# Discord
+discord.com
+discord.gg
+discordapp.com
+cdn.discordapp.com
+media.discordapp.net
+gateway.discord.gg
+
+# YouTube и связанные
+youtube.com
+www.youtube.com
+m.youtube.com
+youtu.be
+yt3.ggpht.com
+i.ytimg.com
+i9.ytimg.com
+s.ytimg.com
+www.google.com
+googlevideo.com
+youtubei.googleapis.com
+www.youtube-nocookie.com
+google.com
+apis.google.com
+content-youtube.com
+video.google.com
+play.google.com
+gstatic.com
+googleapis.com
+googleusercontent.com
+ggpht.com
+gvt1.com
+youtube-nocookie.com
+img.youtube.com
