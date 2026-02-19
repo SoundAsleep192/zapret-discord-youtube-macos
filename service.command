@@ -21,6 +21,8 @@ load_config() {
     MODE="${MODE:-auto}"
     STRATEGY="${STRATEGY:-11}"
     AUTO_SYSTEM_PROXY="${AUTO_SYSTEM_PROXY:-1}"
+    BLOCK_QUIC="${BLOCK_QUIC:-1}"
+    TEST_AFTER_STRATEGY="${TEST_AFTER_STRATEGY:-1}"
     DOMAINS_PATH="$REPO_DIR/$DOMAINS_FILE"
 }
 
@@ -155,6 +157,9 @@ do_start() {
     configure_zapret
     echo "Запускаю zapret..."
     sudo bash "$ZAPRET_DIR/init.d/macos/zapret" start
+    if ! needs_socks && [[ "$BLOCK_QUIC" = "1" ]] && [[ -x "$UTILS/block-quic.sh" ]]; then
+        sudo "$UTILS/block-quic.sh" enable 2>/dev/null || true
+    fi
     if needs_socks && [[ "$AUTO_SYSTEM_PROXY" = "1" ]]; then
         set_system_proxy on
         echo "Системный прокси включён (SOCKS5 127.0.0.1:$SOCKS_PORT)."
@@ -170,6 +175,7 @@ do_stop() {
         echo "Системный прокси выключен."
     fi
     if [[ -n "$ZAPRET_DIR" ]]; then
+        [[ "$BLOCK_QUIC" = "1" ]] && [[ -x "$UTILS/block-quic.sh" ]] && sudo "$UTILS/block-quic.sh" disable 2>/dev/null || true
         sudo bash "$ZAPRET_DIR/init.d/macos/zapret" stop 2>/dev/null || true
         echo "Zapret остановлен."
     else
@@ -180,13 +186,38 @@ do_stop() {
 do_switch_strategy() {
     get_zapret_dir
     [[ -n "$ZAPRET_DIR" ]] || { echo "Zapret не установлен."; return; }
-    echo "Стратегии: 1–13 (11 — ALT11, рекомендуется)"
+    local json="$UTILS/strategies/strategies.json"
+    if [[ -f "$json" ]]; then
+        echo "Стратегии:"
+        for i in $(seq 1 13); do
+            desc=$(python3 -c "import json,sys; d=json.load(open('$json')); print(d.get('$i',{}).get('description','?'))" 2>/dev/null || echo "?")
+            rec=""
+            [[ "$i" = "11" ]] && rec=" (рекомендуется)"
+            echo "  $i — $desc$rec"
+        done
+    else
+        echo "Стратегии: 1–13 (11 — ALT11, рекомендуется)"
+    fi
+    echo ""
     read -p "Номер (1–13): " num
     if [[ "$num" =~ ^[0-9]+$ ]] && (( num >= 1 && num <= 13 )); then
-        [[ -x "$UTILS/apply-strategy.sh" ]] && sudo "$UTILS/apply-strategy.sh" "$num" && echo "Стратегия $num применена."
+        [[ -x "$UTILS/apply-strategy.sh" ]] && TEST_AFTER_STRATEGY="$TEST_AFTER_STRATEGY" SOCKS_PORT="$SOCKS_PORT" sudo -E "$UTILS/apply-strategy.sh" "$num" && echo "Стратегия $num применена."
     else
         echo "Неверный номер."
     fi
+}
+
+do_update_discord_hosts() {
+    load_config
+    [[ -x "$UTILS/update-discord-hosts.sh" ]] || { echo "Скрипт не найден."; return; }
+    sudo "$UTILS/update-discord-hosts.sh" "$DOMAINS_PATH"
+    echo "Готово. При проблемах с голосом Discord перезапустите приложение."
+}
+
+do_check_availability() {
+    load_config
+    [[ -x "$UTILS/check-availability.sh" ]] || { echo "Скрипт не найден."; return; }
+    SOCKS_PORT="$SOCKS_PORT" "$UTILS/check-availability.sh"
 }
 
 do_status() {
@@ -240,13 +271,15 @@ show_menu() {
     echo "  4. Статус"
     echo "  5. Обновить список доменов"
     echo "  6. Сменить стратегию (1–13, для прозрачного режима)"
+    echo "  7. Обновить hosts для Discord (голос и т.п.)"
+    echo "  8. Проверить доступность (YouTube, Discord)"
     echo ""
     echo "  0. Выход"
     echo ""
     echo "  Установлен: $installed  |  Режим: $MODE ($mode_hint)"
-    echo "  Конфиг: config.conf"
+    echo "  Конфиг: config.conf (BLOCK_QUIC, TEST_AFTER_STRATEGY)"
     echo ""
-    read -p "Выбор (0–6): " choice
+    read -p "Выбор (0–8): " choice
 
     case "$choice" in
         1) do_install ;;
@@ -255,6 +288,8 @@ show_menu() {
         4) do_status ;;
         5) update_ip_list ;;
         6) do_switch_strategy ;;
+        7) do_update_discord_hosts ;;
+        8) do_check_availability ;;
         0) exit 0 ;;
         *) echo "Неверный выбор." ;;
     esac
@@ -266,22 +301,26 @@ show_menu() {
 # Точка входа
 # ═══════════════════════════════════════════════════════════════
 case "${1:-menu}" in
-    install)  load_config; do_install ;;
-    start)    load_config; do_start ;;
-    stop)     load_config; do_stop ;;
-    status)   load_config; do_status ;;
-    update)   load_config; update_ip_list ;;
-    strategy) load_config; do_switch_strategy ;;
-    menu)     while true; do show_menu; done ;;
+    install)   load_config; do_install ;;
+    start)     load_config; do_start ;;
+    stop)      load_config; do_stop ;;
+    status)    load_config; do_status ;;
+    update)    load_config; update_ip_list ;;
+    strategy)  load_config; do_switch_strategy ;;
+    discord-hosts) load_config; do_update_discord_hosts ;;
+    check)      load_config; do_check_availability ;;
+    menu)       while true; do show_menu; done ;;
     *)
-        echo "Использование: $0 {install|start|stop|status|update|strategy|menu}"
-        echo "  install  — установка с нуля и запуск"
-        echo "  start    — запуск"
-        echo "  stop     — остановка"
-        echo "  status   — статус"
-        echo "  update   — обновить список доменов"
-        echo "  strategy — смена стратегии (1–13)"
-        echo "  menu     — интерактивное меню (по умолчанию)"
+        echo "Использование: $0 {install|start|stop|status|update|strategy|discord-hosts|check|menu}"
+        echo "  install       — установка с нуля и запуск"
+        echo "  start         — запуск"
+        echo "  stop          — остановка"
+        echo "  status        — статус"
+        echo "  update        — обновить список доменов"
+        echo "  strategy      — смена стратегии (1–13)"
+        echo "  discord-hosts — обновить /etc/hosts для Discord"
+        echo "  check         — проверить доступность YouTube и Discord"
+        echo "  menu          — интерактивное меню (по умолчанию)"
         exit 1
         ;;
 esac

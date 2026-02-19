@@ -80,4 +80,29 @@ rm -f "$TMP_CFG" "$TMP_OPT"
 echo "Перезапускаю zapret..."
 sudo bash "$ZAPRET_DIR/init.d/macos/zapret" restart
 
+# Опционально: проверка доступности после смены стратегии (config: TEST_AFTER_STRATEGY=1)
+if [[ "${TEST_AFTER_STRATEGY:-0}" = "1" ]]; then
+    sleep 2
+    port="${SOCKS_PORT:-987}"
+    if command -v curl >/dev/null 2>&1; then
+        if nc -z 127.0.0.1 "$port" 2>/dev/null; then
+            proxy="socks5h://127.0.0.1:$port"
+            echo "Проверка через SOCKS-прокси..."
+        else
+            proxy=""
+            echo "Проверка (прозрачный режим)..."
+        fi
+        ok=0
+        code_yt=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 ${proxy:+-x "$proxy"} "https://www.youtube.com" 2>/dev/null || echo "000")
+        code_dc=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 ${proxy:+-x "$proxy"} "https://discord.com" 2>/dev/null || echo "000")
+        case "$code_yt" in 200|301|302|303|307) ok=$((ok+1)) ;; esac
+        case "$code_dc" in 200|301|302|303|307) ok=$((ok+1)) ;; esac
+        if [[ $ok -eq 2 ]]; then
+            echo "Проверка пройдена: YouTube ($code_yt), Discord ($code_dc)."
+        else
+            echo "Проверка: YouTube=$code_yt, Discord=$code_dc. Если не открываются — попробуйте другую стратегию (6 или 12)."
+        fi
+    fi
+fi
+
 echo "Готово. Проверьте YouTube и Discord."

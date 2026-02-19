@@ -9,6 +9,26 @@ discordapp.com
 cdn.discordapp.com
 media.discordapp.net
 gateway.discord.gg
+dl.discordapp.net
+discord-attachments-uploads-prd.storage.googleapis.com
+dis.gd
+discord.co
+discord.design
+discord.dev
+discord.gift
+discord.gifts
+discord.media
+discord.new
+discord.store
+discord.tools
+discordapp.net
+discordmerch.com
+discordpartygames.com
+discord-activities.com
+discordactivities.com
+discordsays.com
+comdiscord.com
+discordapp.io
 
 # YouTube и связанные
 youtube.com
@@ -35,3 +55,14 @@ ggpht.com
 gvt1.com
 youtube-nocookie.com
 img.youtube.com
+
+# Chess.com
+chess.com
+www.chess.com
+api.chess.com
+assets.chess.com
+live.chess.com
+images.chess.com
+
+# Прочее
+fandom.com

@@ -1,0 +1,15 @@
+{
+  "1":  { "name": "default", "description": "split-pos=1,midsld, disorder" },
+  "2":  { "name": "alt", "description": "split-pos=1, disorder" },
+  "3":  { "name": "alt2", "description": "split-pos=2, disorder" },
+  "4":  { "name": "alt3", "description": "split-pos=2,midsld, disorder" },
+  "5":  { "name": "simple", "description": "split-pos=1" },
+  "6":  { "name": "midsld", "description": "split-pos=midsld, disorder" },
+  "7":  { "name": "hostcase", "description": "hostcase + split-pos=1" },
+  "8":  { "name": "hostdot", "description": "hostdot + split-pos=1" },
+  "9":  { "name": "sld2", "description": "split-pos=sld2, disorder" },
+  "10": { "name": "methodspace", "description": "methodspace" },
+  "11": { "name": "alt11", "description": "hostcase+hostdot (рекомендуется)" },
+  "12": { "name": "oob", "description": "out-of-band" },
+  "13": { "name": "nodisorder", "description": "no disorder" }
+}
