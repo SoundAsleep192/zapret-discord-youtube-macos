@@ -56,15 +56,7 @@ gvt1.com
 youtube-nocookie.com
 img.youtube.com
 
-# Chess.com (часто за Cloudflare)
-chess.com
-www.chess.com
-api.chess.com
-assets.chess.com
-live.chess.com
-images.chess.com
-
-# Cloudflare (из Flowseal list-general.txt — сайты за Cloudflare, в т.ч. chess.com)
+# Cloudflare (из Flowseal list-general.txt)
 cloudflare.com
 cdnjs.cloudflare.com
 static.cloudflare.com
