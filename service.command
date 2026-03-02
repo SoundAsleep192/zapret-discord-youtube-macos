@@ -169,18 +169,42 @@ do_start() {
 }
 
 do_stop() {
+    load_config
     get_zapret_dir
-    if needs_socks && [[ "$AUTO_SYSTEM_PROXY" = "1" ]]; then
+
+    # 1. Всегда выключаем системный прокси в режиме SOCKS (чтобы трафик не шёл через уже остановленный прокси)
+    if needs_socks; then
         set_system_proxy off
         echo "Системный прокси выключен."
     fi
-    if [[ -n "$ZAPRET_DIR" ]]; then
-        [[ "$BLOCK_QUIC" = "1" ]] && [[ -x "$UTILS/block-quic.sh" ]] && sudo "$UTILS/block-quic.sh" disable 2>/dev/null || true
-        sudo bash "$ZAPRET_DIR/init.d/macos/zapret" stop 2>/dev/null || true
-        echo "Zapret остановлен."
-    else
+
+    if [[ -z "$ZAPRET_DIR" ]]; then
         echo "Zapret не установлен."
+        return 0
     fi
+
+    # 2. Снимаем блокировку QUIC (наш anchor в PF)
+    if [[ -x "$UTILS/block-quic.sh" ]]; then
+        sudo "$UTILS/block-quic.sh" disable 2>/dev/null || true
+    fi
+
+    # 3. Останавливаем zapret через официальный скрипт
+    local zapret_script="$ZAPRET_DIR/init.d/macos/zapret"
+    if [[ -f "$zapret_script" ]]; then
+        sudo bash "$zapret_script" stop || true
+    fi
+
+    # 4. Принудительно завершаем все процессы tpws (на случай если скрипт не сработал или не убил демоны)
+    if sudo pgrep -f "tpws" >/dev/null 2>&1; then
+        echo "Завершаю оставшиеся процессы tpws..."
+        sudo pkill -f "tpws" 2>/dev/null || true
+        sleep 1
+        if sudo pgrep -f "tpws" >/dev/null 2>&1; then
+            sudo pkill -9 -f "tpws" 2>/dev/null || true
+        fi
+    fi
+
+    echo "Zapret остановлен."
 }
 
 do_switch_strategy() {
@@ -189,19 +213,18 @@ do_switch_strategy() {
     local json="$UTILS/strategies/strategies.json"
     if [[ -f "$json" ]]; then
         echo "Стратегии:"
-        for i in $(seq 1 14); do
+        for i in $(seq 1 13); do
             desc=$(python3 -c "import json,sys; d=json.load(open('$json')); print(d.get('$i',{}).get('description','?'))" 2>/dev/null || echo "?")
             rec=""
             [[ "$i" = "11" ]] && rec=" (рекомендуется)"
-            [[ "$i" = "14" ]] && rec=" (для chess.com/Cloudflare)"
             echo "  $i — $desc$rec"
         done
     else
-        echo "Стратегии: 1–14 (11 — рекомендуется, 14 — для chess.com)"
+        echo "Стратегии: 1–13 (11 — рекомендуется)"
     fi
     echo ""
-    read -p "Номер (1–14): " num
-    if [[ "$num" =~ ^[0-9]+$ ]] && (( num >= 1 && num <= 14 )); then
+    read -p "Номер (1–13): " num
+    if [[ "$num" =~ ^[0-9]+$ ]] && (( num >= 1 && num <= 13 )); then
         [[ -x "$UTILS/apply-strategy.sh" ]] && TEST_AFTER_STRATEGY="$TEST_AFTER_STRATEGY" SOCKS_PORT="$SOCKS_PORT" sudo -E "$UTILS/apply-strategy.sh" "$num" && echo "Стратегия $num применена."
     else
         echo "Неверный номер."
@@ -271,7 +294,7 @@ show_menu() {
     echo "  3. Остановить"
     echo "  4. Статус"
     echo "  5. Обновить список доменов"
-    echo "  6. Сменить стратегию (1–14, для прозрачного режима)"
+    echo "  6. Сменить стратегию (1–13, для прозрачного режима)"
     echo "  7. Обновить hosts для Discord (голос и т.п.)"
     echo "  8. Проверить доступность (YouTube, Discord)"
     echo ""
@@ -318,7 +341,7 @@ case "${1:-menu}" in
         echo "  stop          — остановка"
         echo "  status        — статус"
         echo "  update        — обновить список доменов"
-        echo "  strategy      — смена стратегии (1–14)"
+        echo "  strategy      — смена стратегии (1–13)"
         echo "  discord-hosts — обновить /etc/hosts для Discord"
         echo "  check         — проверить доступность YouTube и Discord"
         echo "  menu          — интерактивное меню (по умолчанию)"

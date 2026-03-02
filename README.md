@@ -27,7 +27,7 @@ cd ~/zapret-discord-youtube-macos
 | **service.command** | Главный скрипт — интерактивное меню: установка, запуск, остановка, обновление списков, стратегии и т.д. |
 | **config.conf** | Единый конфиг: режим (auto/transparent/socks), стратегия, порт, автопрокси. |
 | **Install.command** | Установка с нуля (то же, что пункт 1 в меню или `service.command install`). |
-| **Switch-Strategy.command** | Смена стратегии 1–14 (то же, что пункт 6 в меню). |
+| **Switch-Strategy.command** | Смена стратегии 1–13 (то же, что пункт 6 в меню). |
 | **lists/domains.txt** | Список доменов для обхода. По умолчанию — Discord и YouTube. |
 | **utils/strategies/strategies.json** | Описания стратегий (номера, названия) для меню. |
 | **utils/block-quic.sh** | Блокировка QUIC (UDP/443) в прозрачном режиме. |
@@ -42,8 +42,8 @@ cd ~/zapret-discord-youtube-macos
 # Режим: auto | transparent | socks
 MODE=auto
 
-# Стратегия (1–14). 11 — ALT11, 14 — для chess.com/Cloudflare
-STRATEGY=14
+# Стратегия (1–13). 11 — ALT11 (рекомендуется)
+STRATEGY=11
 
 # Системный SOCKS-прокси при start/stop (только для режима SOCKS)
 AUTO_SYSTEM_PROXY=1
@@ -80,13 +80,13 @@ SOCKS_PORT=987
 - **Обновить hosts для Discord** — пункт меню 7 или `./service.command discord-hosts`. Резолвит Discord-домены из `lists/domains.txt` и обновляет блок в `/etc/hosts` (между маркерами `# >>> zapret-discord-youtube-macos discord` и `# <<< ...`). Может помочь с голосом и обновлениями клиента.
 - **Проверка после смены стратегии** — при `TEST_AFTER_STRATEGY=1` после смены стратегии выполняется быстрая проверка (curl) YouTube и Discord; результат выводится в консоль.
 - **Проверить доступность** — пункт меню 8 или `./service.command check`. В любой момент проверяет ответ YouTube и Discord (через прокси, если zapret в SOCKS-режиме запущен, иначе напрямую). Не меняет настройки.
-- **Стратегии из JSON** — список стратегий в меню и в `Switch-Strategy.command` берётся из `utils/strategies/strategies.json` (номера и описания). Опции tpws в `utils/strategies/N-*.txt`. Для **chess.com** и сайтов за Cloudflare по умолчанию стоит **стратегия 14** (midsld без disorder); если что-то не грузится — попробуйте 11 или 6.
+- **Стратегии из JSON** — список стратегий в меню и в `Switch-Strategy.command` берётся из `utils/strategies/strategies.json` (номера и описания). Опции tpws в `utils/strategies/N-*.txt`. Рекомендуется **стратегия 11** (hostcase+hostdot); если не работает — попробуйте 6 или 12.
 
 ---
 
 ## Удаление
 
-1. `./service.command stop`
+1. `./service.command stop` — останавливает zapret, выключает системный прокси, снимает правила PF (в т.ч. блокировку QUIC) и принудительно завершает процессы tpws, если скрипт zapret не сработал.
 2. Удалить папку `zapret-discord-youtube-macos`
 3. Полное удаление zapret:
    ```bash
@@ -135,13 +135,13 @@ SOCKS_PORT=987
 
 ---
 
-## Почему на Windows (Flowseal) всё открывается, а на Mac chess.com — нет
+## Архитектурные различия: Windows vs macOS
 
 На Windows [Flowseal zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) использует **winws.exe** (nfqws под WinDivert): перехват трафика **на уровне пакетов** в ядре. Там доступны опции вроде `--dpi-desync=fake,multisplit`, отправка **готовых бинарных TLS ClientHello** (`tls_clienthello_*.bin`), `--dpi-desync-split-seqovl=664`, `--dpi-desync-fooling=ts` и т.д. — то есть тонкая подмена и фрагментация пакетов под обход DPI.
 
 На macOS в нашей обёртке используется **tpws** — **прокси на уровне приложения** (SOCKS или прозрачный). У tpws другой набор опций: `--split-pos`, `--disorder`, `--methodeol`, `--hostcase` и т.д. Нет ни бинарных TLS-шаблонов, ни seqovl в том же виде, что в nfqws. Поэтому **повторить поведение Flowseal под Windows на Mac нельзя** — движок другой.
 
-**Что мы сделали:** список доменов в `lists/domains.txt` приведён к тому же набору, что в Flowseal `list-general.txt` (Cloudflare, Discord, chess.com и др.), плюс стратегия 14 и варианты 5/13 для более «мягкого» обхода. Если chess.com за Cloudflare режет соединения при любых правках tpws (как у тебя — проверка даёт 200, а в браузере ERR_CONNECTION_CLOSED), это ограничение именно **tpws на Mac**, а не списка доменов. Полноценно повторить обход как на Windows можно будет только когда на Mac появится поддержка **nfqws2** (zapret2) или аналог WinDivert.
+Полноценно повторить обход как на Windows можно будет только когда на Mac появится поддержка **nfqws2** (zapret2) или аналог WinDivert.
 
 ---
 
@@ -151,7 +151,7 @@ SOCKS_PORT=987
 
 ### 1. SpoofDPI (другая реализация обхода)
 
-**[SpoofDPI](https://github.com/xvzc/SpoofDPI)** — анти-цензурный инструмент на Go, есть сборки для macOS (Intel и Apple Silicon). Работает локально, может использовать режим «VPN» или модификацию пакетов (fake, split TLS по SNI и т.д.). Реализация не tpws, поэтому на части сайтов (в т.ч. за Cloudflare) может вести себя иначе.
+**[SpoofDPI](https://github.com/xvzc/SpoofDPI)** — анти-цензурный инструмент на Go, есть сборки для macOS (Intel и Apple Silicon). Работает локально, может использовать режим «VPN» или модификацию пакетов (fake, split TLS по SNI и т.д.). Реализация не tpws, поэтому на части сайтов может вести себя иначе.
 
 - Установка:  
   `curl -fsSL https://raw.githubusercontent.com/xvzc/SpoofDPI/main/install.sh | bash`  
@@ -161,7 +161,7 @@ SOCKS_PORT=987
 
 ### 2. UnblockPro (zapret под капотом + GUI)
 
-**[UnblockPro](https://github.com/by-sonic/unblock-pro)** — приложение с графическим интерфейсом для macOS и Windows. На Mac внутри тоже используется **tpws** (как у этого репозитория), но приложение само перебирает несколько стратегий и проверяет их запросом. Может подойти, если хочется «одна кнопка» и автоподбор стратегии; для сайтов, которые не переживают любые правки tpws (как chess.com у тебя), ограничение то же.
+**[UnblockPro](https://github.com/by-sonic/unblock-pro)** — приложение с графическим интерфейсом для macOS и Windows. На Mac внутри тоже используется **tpws** (как у этого репозитория), но приложение само перебирает несколько стратегий и проверяет их запросом. Может подойти, если хочется «одна кнопка» и автоподбор стратегии.
 
 - Скачать сборку для Mac (Intel или Apple Silicon) из [Releases](https://github.com/by-sonic/unblock-pro/releases).
 - После распаковки: `xattr -cr /Applications/UnblockPro.app`, затем запуск и «Подключить».

@@ -9,8 +9,7 @@
   "8":  { "name": "hostdot", "description": "hostdot + split-pos=1" },
   "9":  { "name": "sld2", "description": "split-pos=sld2, disorder" },
   "10": { "name": "methodspace", "description": "methodspace" },
-  "11": { "name": "alt11", "description": "hostcase+hostdot (рекомендуется)" },
+  "11": { "name": "alt11", "description": "hostcase+hostdot" },
   "12": { "name": "oob", "description": "out-of-band" },
-  "13": { "name": "nodisorder", "description": "no disorder" },
-  "14": { "name": "cloudflare", "description": "midsld без disorder — для chess.com / Cloudflare" }
+  "13": { "name": "nodisorder", "description": "no disorder" }
 }
